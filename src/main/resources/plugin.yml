@@ -1,0 +1,13 @@
+name: ParkourWarriors
+version: '${project.version}'
+main: fun.kaituo.parkourwarriors.ParkourWarriors
+api-version: 1.18
+authors: [ LeChocolatChaud ]
+commands:
+  parkourwarriors:
+    description: Control the parkour plugin
+    aliases: pw
+permissions:
+  parkourwarriors.op:
+    description: Permission to operate the parkour leaderboard
+    default: op
