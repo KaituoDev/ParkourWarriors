@@ -21,6 +21,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.BoundingBox;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,9 +37,9 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     private Team parkourSlimesTeam;
     private HashMap<UUID, Integer> parkourPlayersTasksMap;
     private Location startLocation;
-    private final BoundingBox endBoundingBox = new BoundingBox(-23.0, 57.0, -67.0, -20.0, 59.5, -65.0);
+    private final BoundingBox endBoundingBox = new BoundingBox(-53.0, 57.0, -81.0, -49.6, 61.0, -78.6);
     private final BoundingBox extraBoundingBox = new BoundingBox(30.0, -350.0, -30.0, 47.0, 81.0, 18.0);
-    
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -184,7 +185,7 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     }
     
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, Command command, @NotNull String label, String[] args) {
         if (command.getName().equalsIgnoreCase("parkourwarriors")) {            // command start
             
             if (args.length == 0) {                                                 // no args, show usage (GUARD)
@@ -368,7 +369,7 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     }
     
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, Command command, @NotNull String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("parkourwarriors")) {            // command start
             switch (args.length) {
                 case 1:
