@@ -50,6 +50,7 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <finalName>ParkourWarriors</finalName>
     </build>
 
     <repositories>
@@ -73,8 +74,8 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
+            <version>23.1.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
