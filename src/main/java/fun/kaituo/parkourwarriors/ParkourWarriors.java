@@ -1,9 +1,8 @@
 package fun.kaituo.parkourwarriors;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.advancement.Advancement;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -37,6 +36,8 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     private Team parkourSlimesTeam;
     private HashMap<UUID, Integer> parkourPlayersTasksMap;
     private Location startLocation;
+    private Advancement[] pwAdvancements;
+    private BoundingBox[] pwAdvancementsCriteriaBoxes;
     private final BoundingBox endBoundingBox = new BoundingBox(-53.0, 57.0, -81.0, -49.6, 61.0, -78.6);
     private final BoundingBox extraBoundingBox = new BoundingBox(30.0, -350.0, -30.0, 47.0, 81.0, 18.0);
 
@@ -80,6 +81,46 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
                 parkourSlimesTeam.addEntry(entry);
             }
         }, 0, 6000);
+        NamespacedKey[] pwAdvancementKeys = {
+                new NamespacedKey(this, "root"),                    // 0
+                new NamespacedKey(this, "lv1_part1"),               // 1
+                new NamespacedKey(this, "lv1_part2"),               // 2
+                new NamespacedKey(this, "lv1_part3"),               // 3
+                new NamespacedKey(this, "lv2_start"),               // 4
+                new NamespacedKey(this, "lv2_part1"),               // 5
+                new NamespacedKey(this, "lv2_part2"),               // 6
+                new NamespacedKey(this, "lv2_part3"),               // 7
+                new NamespacedKey(this, "lv2_part4"),               // 8
+                new NamespacedKey(this, "lv2_part5"),               // 9
+                new NamespacedKey(this, "end"),                     // 10
+                new NamespacedKey(this, "going_back"),              // 11
+                new NamespacedKey(this, "lv1_sp1_honey"),           // 12
+                new NamespacedKey(this, "lv1_sp2_double_jump"),     // 13
+                new NamespacedKey(this, "lv2_sp1_quad_jump"),
+                new NamespacedKey(this, "lv2_sp2_honey_again")      // 15
+        };
+        pwAdvancements = new Advancement[15];
+        for (int i = 0; i < pwAdvancementKeys.length; i++) {
+            pwAdvancements[i] = Bukkit.getAdvancement(pwAdvancementKeys[i]);
+        }
+        pwAdvancementsCriteriaBoxes = new BoundingBox[]{
+                null,
+                new BoundingBox(5.0, 75.0, 62.5, 7.0, 77.0, 64.5),
+                new BoundingBox(10.0, 79.0, 67.0, 11.0, 81.0, 71.0),
+                new BoundingBox(38.0, 71.0, 7.0, 41.0, 77.0, 10.0),
+                new BoundingBox(39.0, 73.0, -48.0, 46.0, 78.0, -46.0),
+                new BoundingBox(16.0, 65.0, -75.0, 18.375, 68.0, -67.625),
+                new BoundingBox(-20.0, 58.25, -90.0, -18.0, 61.0, -86.0),
+                new BoundingBox(-20.0, 32.0, -76.0, -18.0, 35.0, -71.0),
+                new BoundingBox(-24.0, 57.0, -67.0, -200, 60.0, -65.0),
+                null,
+                null,
+                null,
+                new BoundingBox(5.5, 75.5, 56.0, 6.5, 78.0, 57.0),
+                new BoundingBox(33.0, 59.0, 45.0, 36.0, 57.0, 49.0),
+                new BoundingBox(-15.0, 55.0, -80.0, -14.0, 58.0, -79.0),
+                new BoundingBox(-29.0, 68.0, -83.0, -27.0, 68.0, -82.0)
+        };
     }
     
     @EventHandler
@@ -93,9 +134,10 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     }
     
     @EventHandler
-    public void onPlayerStart(PlayerInteractEvent event) {
+    public void onPlayerInteract(PlayerInteractEvent event) {
         Player p = event.getPlayer();
         if (event.getAction().equals(Action.PHYSICAL) && Objects.requireNonNull(event.getClickedBlock()).getLocation().equals(startLocation.getBlock().getLocation())) {
+            p.getAdvancementProgress(pwAdvancements[0]).awardCriteria("impossible");
             if (!parkourPlayersTasksMap.containsKey(p.getUniqueId())) {
                 sendNotification(event.getPlayer(), "使用手中的下界之星或/pw restart来重新开始");
                 sendNotification(event.getPlayer(), "使用物品栏中的烟火之星或/pw stop来结束计时");
@@ -149,8 +191,10 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
         Location location = p.getLocation();
         double x = location.getX();
         double z = location.getZ();
+        checkAdvancement(p);
         if (endBoundingBox.contains(location.toVector())) {
             if (parkourPlayersTasksMap.containsKey(p.getUniqueId())) {
+                p.getAdvancementProgress(pwAdvancements[10]).awardCriteria("impossible");
                 Bukkit.getScheduler().cancelTask(parkourPlayersTasksMap.get(p.getUniqueId()));
                 parkourPlayersTasksMap.remove(p.getUniqueId());
             }
@@ -173,6 +217,17 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
             }
             p.getInventory().remove(restartItemStack);
             p.getInventory().remove(stopItemStack);
+        }
+    }
+
+    private void checkAdvancement(Player p) {
+        Location location = p.getLocation();
+        for (int i = 0; i < pwAdvancementsCriteriaBoxes.length; i++) {
+            BoundingBox box = pwAdvancementsCriteriaBoxes[i];
+            AdvancementProgress ap = p.getAdvancementProgress(pwAdvancements[i]);
+            if (box == null) continue;
+            if (ap.isDone()) continue;
+            if (box.contains(location.toVector())) ap.awardCriteria("impossible");
         }
     }
     
