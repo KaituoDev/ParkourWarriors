@@ -41,6 +41,7 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     private final BoundingBox endBoundingBox = new BoundingBox(-8.0, 88.0, -6.0, -9.0, 91.0, 11.0);
     private final BoundingBox extraBoundingBox1 = new BoundingBox(30.0, -350.0, -30.0, 47.0, 81.0, 18.0);
     private final BoundingBox extraBoundingBox2 = new BoundingBox(-41.0, -350.0, -42.0, -18.0, 81.0, -16.0);
+    private final BoundingBox extraBoundingBox3 = new BoundingBox(-52.0, 60.0, -11.0, -9.0, 10.0, 7.0);
 
     @Override
     public void onEnable() {
@@ -205,7 +206,10 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
             }
             p.getInventory().remove(restartItemStack);
             p.getInventory().remove(stopItemStack);
-        } else if ((x * x + z * z > 1836.58 && x * x + z * z < 11946.49) || extraBoundingBox1.contains(location.toVector()) || extraBoundingBox2.contains(location.toVector())) {
+        } else if ((x * x + z * z > 1836.58 && x * x + z * z < 11946.49) ||
+                extraBoundingBox1.contains(location.toVector()) ||
+                extraBoundingBox2.contains(location.toVector()) ||
+                extraBoundingBox3.contains(location.toVector())) {
             if (!parkourTeam.hasEntry(p.getName())) {
                 parkourTeam.addEntry(p.getName());
                 p.setScoreboard(parkourScoreboard);
