@@ -1,5 +1,9 @@
 package fun.kaituo.parkourwarriors;
 
+import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.node.Node;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
@@ -7,6 +11,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,7 +46,8 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
     private final BoundingBox endBoundingBox = new BoundingBox(-13.0, 88.0, -6.0, -9.0, 91.0, 11.0);
     private final BoundingBox extraBoundingBox1 = new BoundingBox(30.0, -350.0, -30.0, 47.0, 81.0, 18.0);
     private final BoundingBox extraBoundingBox2 = new BoundingBox(-41.0, -350.0, -42.0, -18.0, 81.0, -16.0);
-    private final BoundingBox extraBoundingBox3 = new BoundingBox(-52.0, 60.0, -11.0, -9.0, 110.0, 7.0);
+    private final BoundingBox extraBoundingBox3 = new BoundingBox(-52.0, -350.0, -11.0, -9.0, 110.0, 7.0);
+    private LuckPerms lp;
 
     @Override
     public void onEnable() {
@@ -127,6 +133,7 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
                 new BoundingBox(-29.0, 68.0, -83.0, -27.0, 71.0, -82.0),            // l2sp2
                 new BoundingBox(-50.0, 72.0, -31.0, -48.0, 74.0, -30.0)             // l3sp
         };
+        lp = LuckPermsProvider.get();
     }
     
     @EventHandler
@@ -164,6 +171,8 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
             } else if (p.getInventory().getItemInMainHand().equals(stopItemStack)) {
                 Bukkit.getScheduler().cancelTask(parkourPlayersTasksMap.get(p.getUniqueId()));
                 parkourPlayersTasksMap.remove(p.getUniqueId());
+                p.getInventory().remove(restartItemStack);
+                p.getInventory().remove(stopItemStack);
                 if (!endBoundingBox.contains(p.getLocation().toVector())) {
                     parkourScoreboard.resetScores(p.getName());
                 }
@@ -182,6 +191,32 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
         if (parkourTeam.hasEntry(p.getName())) {
             parkourTeam.removeEntry(p.getName());
             p.setScoreboard(mainScoreboard);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerThrow(PlayerLaunchProjectileEvent event) {
+        Player p = event.getPlayer();
+        if (parkourPlayersTasksMap.containsKey(p.getUniqueId()) && event.getProjectile() instanceof EnderPearl) {
+            Score s = parkourObjective.getScore(p.getName());
+            int si = s.getScore();
+            if (si >= 2000) {
+                s.setScore(si + 5);
+            } else if (si >= 1000) {
+                s.setScore(si + 10);
+            } else if (si >= 700) {
+                s.setScore(si + 50);
+            } else if (si >= 500) {
+                s.setScore(si + 100);
+            } else if (si >= 300) {
+                s.setScore(si + 150);
+            } else if (si >= 100) {
+                s.setScore(si + 200);
+            } else if (si >= 0) {
+                s.setScore(si + 250);
+            } else {
+                s.setScore(0);
+            }
         }
     }
     
@@ -203,6 +238,11 @@ public final class ParkourWarriors extends JavaPlugin implements Listener {
                 p.getAdvancementProgress(pwAdvancements[11]).awardCriteria("impossible");
                 Bukkit.getScheduler().cancelTask(parkourPlayersTasksMap.get(p.getUniqueId()));
                 parkourPlayersTasksMap.remove(p.getUniqueId());
+            }
+            if (parkourObjective.getScore(p.getName()).getScore() <= 600 && Objects.requireNonNull(lp.getUserManager().getUser(p.getUniqueId())).getDistinctNodes().stream().noneMatch(n -> n.getKey().equals("deluxetags.tag.parkour") && n.getValue())) {
+                lp.getUserManager().modifyUser(p.getUniqueId(), user -> {
+                    user.data().add(Node.builder("deluxetags.tag.parkour").value(true).build());
+                });
             }
             p.getInventory().remove(restartItemStack);
             p.getInventory().remove(stopItemStack);
